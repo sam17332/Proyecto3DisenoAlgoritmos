@@ -61,15 +61,11 @@ PRODUCTIONS
       )                            (. result *= sign .)
       .
 
-   Number<out result>
-   =
-   number                     (. result = self.getNumber() .)
+   Number<out result> = number (. result = self.getNumber() .)
    .
 
 /*
-   Ident<out name>
-   =
-   ident                      (. name = self.getVar() .)
+   Ident<out name> = ident (. name = self.getVar() .)
    .
 */
 
