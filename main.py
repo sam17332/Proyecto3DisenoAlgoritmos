@@ -14,6 +14,7 @@ class Main:
         self.json = {}
         self.characters = []
         self.print = pprint.PrettyPrinter()
+        self.lineasBloqueadas = []
 
     def main(self):
         self.lectura()
@@ -34,15 +35,17 @@ class Main:
                 valor = set(valor)
                 diccionarioCHR[char] = valor
 
-        print("----------------------------------------------------------------------------------------------------")
-        print("------------------------------------------------JSON------------------------------------------------")
-        print("----------------------------------------------------------------------------------------------------")
-        self.print.pprint(self.json)
-        print()
-        print()
-        print()
+        # print("----------------------------------------------------------------------------------------------------")
+        # print("------------------------------------------------JSON------------------------------------------------")
+        # print("----------------------------------------------------------------------------------------------------")
+        # self.print.pprint(self.json)
+        # print()
+        # print()
+        # print()
 
+    '''
         self.construccionTokens()
+        self.construccionProducciones()
 
         tokensLen = len(self.json["TOKENS"])
 
@@ -62,28 +65,30 @@ class Main:
         postfixInst = Postfix()
         postfix = postfixInst.toPostfix(arrayAcumuladoTokens)
         cont = 0
-        print("-----------------------------------------------------------------------------------------------------")
-        print("-----------------------------------------------POSTFIX-----------------------------------------------")
-        print("-----------------------------------------------------------------------------------------------------")
-        for token in postfix:
-            print(cont)
-            print(token.getTipoChar())
-            print(type(token.getValor()))
-            print()
-            cont +=1
-        print()
-        print()
-        print()
+        # print("-----------------------------------------------------------------------------------------------------")
+        # print("-----------------------------------------------POSTFIX-----------------------------------------------")
+        # print("-----------------------------------------------------------------------------------------------------")
+        # for token in postfix:
+        #     print(cont)
+        #     print(token.getTipoChar())
+        #     print(type(token.getValor()))
+        #     print()
+        #     cont +=1
+        # print()
+        # print()
+        # print()
 
         directoInst = Directo(postfix)
         directoInst.arbolDirecto()
 
         self.escribirScanner()
+    '''
 
     def lectura(self):
         char = False
         key = False
         tokens = False
+        produc = False
         path = str("cocols/" + self.nombreArchivo)
         archivo = open(path, "r+")
         contador = 1
@@ -98,31 +103,37 @@ class Main:
                 char = False
                 key = False
                 tokens = False
+                produc = False
             elif(linea[0:10] == "CHARACTERS"):
                 self.json[linea[0:10]] = {}
                 char = True
                 key = False
                 tokens = False
+                produc = False
             elif(linea[0:8] == "KEYWORDS"):
                 self.json[linea[0:8]] = {}
                 char = False
                 key = True
                 tokens = False
+                produc = False
             elif(linea[0:6] == "TOKENS"):
                 self.json[linea[0:6]] = {}
                 char = False
                 key = False
                 tokens = True
+                produc = False
             elif(linea[0:11] == "PRODUCTIONS"):
                 self.json[linea[0:11]] = {}
                 char = False
                 key = False
                 tokens = False
+                produc = True
             elif(linea[0:7] == "PRAGMAS"):
                 self.json[linea[0:7]] = {}
                 char = False
                 key = False
                 tokens = False
+                produc = False
 
             if(char):
                 arrayChar = linea.split("=")
@@ -194,12 +205,26 @@ class Main:
                     var = str(arrayToken[0].replace(" ", ""))
                     resultado = arrayToken[1]
                     if(resultado[len(resultado)-1] != "."):
-                        resultado = self.defMultiLinea(contador)
+                        resultado = self.defMultiLineaTokens(contador)
                         diccionarioToken[var] = str(resultado)
                     else:
                         diccionarioToken[var] = str(resultado)
-            contador += 1
 
+            elif(produc and contador not in self.lineasBloqueadas):
+                arrayProduc = linea.split("=", 1)
+                if(len(arrayProduc) > 1):
+                    diccionarioProduc = self.json["PRODUCTIONS"]
+                    var = str(arrayProduc[0])
+                    resultado = arrayProduc[1]
+                    if(resultado[len(resultado)-1] != "."):
+                        self.lineasBloqueadas.append(contador)
+                        resultado = self.defMultiLineaProd(contador)
+                        diccionarioProduc[var] = str(resultado)
+                    else:
+                        diccionarioProduc[var] = str(resultado)
+
+            contador += 1
+        print(diccionarioProduc)
         archivo.close()
 
     def obtenerRangoLetras(self, linea):
@@ -220,8 +245,6 @@ class Main:
     def obtenerCHR(self, linea):
         arrayLinea = linea.split(" ")
         arrayPuntos = []
-        # arrayCHR = []
-        # nuevaLinea = ""
         i = 0
 
         if(".." in arrayLinea):
@@ -240,19 +263,6 @@ class Main:
                     setChars = setChars.replace(" ", "")
                     sustituto = "CHR(" + str(val1) + ")" + " .. " + "CHR(" + str(val2) + ")"
                     linea = linea.replace(sustituto, setChars)
-        # else:
-        #     for pos in arrayLinea:
-        #         if("CHR(" in pos):
-        #             arrayCHR.append(i)
-        #         i += 1
-        #     for i in arrayCHR:
-        #         if("CHR(" in arrayLinea[i]):
-        #             val1 = arrayLinea[i].replace("CHR(", "")
-        #             val1 = val1.replace(")", "")
-        #             setChars = str(chr(int(val1)))
-        #             setChars = setChars.replace(" ", "")
-        #             sustituto = "CHR(" + str(val1) + ")"
-        #             nuevaLinea = linea.replace(sustituto, setChars)
 
         while "CHR(" in linea:
             if("CHR(" in linea):
@@ -266,7 +276,7 @@ class Main:
 
         return linea
 
-    def defMultiLinea(self, numeroLinea):
+    def defMultiLineaTokens(self, numeroLinea):
         path = str("cocols/" + self.nombreArchivo)
         archivo = open(path, "r")
         contador = 1
@@ -293,6 +303,33 @@ class Main:
 
         return resultadoToken
 
+    def defMultiLineaProd(self, numeroLinea):
+        path = str("cocols/" + self.nombreArchivo)
+        archivo = open(path, "r")
+        contador = 1
+        resultadoProd = ""
+        multiLinea = False
+        for linea in archivo.readlines():
+            linea = linea.replace("\n", "")
+            if(multiLinea):
+                self.lineasBloqueadas.append(contador)
+                if(linea[len(linea)-1] != "."):
+                    resultadoProd += linea
+                else:
+                    resultadoProd += linea
+                    break
+
+            if(multiLinea == False and contador == numeroLinea and linea[len(linea)-1] != "."):
+                array = linea.split("=", 1)
+                resultadoProd += array[1]
+                multiLinea = True
+
+            contador += 1
+
+        archivo.close()
+
+        return resultadoProd
+
     def leerString(self, expresion, diccionario, contador):
         posiAct = 0
         tamanio = len(expresion)
@@ -313,6 +350,9 @@ class Main:
             posiAct += 1
 
         return diccionario, contador
+
+    def construccionProducciones(self):
+        print("construccionProducciones")
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
@@ -704,9 +744,9 @@ menu()
 
 
 def menu():
-    nombre = str(input("Ingrese el nombre del archivo Cocol que desea leer: "))
+    # nombre = str(input("Ingrese el nombre del archivo Cocol que desea leer: "))
 
-    main = Main(nombre)
+    main = Main("Expr.ATG")
     main.main()
 
 menu()

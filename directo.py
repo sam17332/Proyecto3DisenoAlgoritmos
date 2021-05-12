@@ -1,4 +1,4 @@
-# from graphviz import Digraph
+from graphviz import Digraph
 from nodoD import *
 import time
 import pickle5 as pickle
