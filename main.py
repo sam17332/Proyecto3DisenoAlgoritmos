@@ -215,13 +215,15 @@ class Main:
                 if(len(arrayProduc) > 1):
                     diccionarioProduc = self.json["PRODUCTIONS"]
                     var = str(arrayProduc[0])
+                    var = var.replace("  ", "")
                     resultado = arrayProduc[1]
                     if(resultado[len(resultado)-1] != "."):
                         self.lineasBloqueadas.append(contador)
                         resultado = self.defMultiLineaProd(contador)
-                        diccionarioProduc[var] = str(resultado)
-                    else:
-                        diccionarioProduc[var] = str(resultado)
+                    resultado = resultado.replace("  ", "")
+                    resultado = resultado.replace("(. ", "(.")
+                    resultado = resultado.replace(" .)", ".)")
+                    diccionarioProduc[var] = str(resultado)
 
             contador += 1
         print(diccionarioProduc)
