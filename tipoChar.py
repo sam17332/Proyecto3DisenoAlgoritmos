@@ -3,6 +3,7 @@ class TipoChar:
         self.tipo = ""
         self.valor = ""
         self.character = ""
+        self.keywords = ""
 
     def getTipo(self):
         return self.tipo
@@ -21,6 +22,12 @@ class TipoChar:
 
     def setCharacter(self, character):
         self.character = character
+
+    def getKeywords(self):
+        return self.keywords
+
+    def setKeywords(self, keywords):
+        self.keywords = keywords
 
     def getTipoChar(self):
         return [self.tipo, self.valor, self.character]
