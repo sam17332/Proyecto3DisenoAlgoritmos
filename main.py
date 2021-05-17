@@ -43,7 +43,7 @@ class Main:
         # print()
         # print()
 
-    '''
+    # '''
         self.construccionTokens()
         self.construccionProducciones()
 
@@ -82,7 +82,7 @@ class Main:
         directoInst.arbolDirecto()
 
         self.escribirScanner()
-    '''
+    # '''
 
     def lectura(self):
         char = False
@@ -193,7 +193,9 @@ class Main:
                 arrayKey = linea.split("=")
                 if(len(arrayKey) >1):
                     diccionarioKey = self.json["KEYWORDS"]
-                    resultado = arrayKey[1]
+                    resultado = arrayKey[1].replace(".", "")
+                    resultado = resultado.replace('"', "")
+                    resultado = resultado.replace(" ", "")
                     var = str(arrayKey[0].replace(" ", ""))
                     diccionarioKey[var] = str(resultado)
 
@@ -226,7 +228,6 @@ class Main:
                     diccionarioProduc[var] = str(resultado)
 
             contador += 1
-        print(diccionarioProduc)
         archivo.close()
 
     def obtenerRangoLetras(self, linea):
@@ -354,10 +355,11 @@ class Main:
         return diccionario, contador
 
     def construccionProducciones(self):
-        print("construccionProducciones")
+        x=1
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
+        diccionarioKey = self.json["KEYWORDS"]
         diccionarioCharacters = self.json["CHARACTERS"]
         esString1 = False
         esString2 = False
@@ -369,6 +371,7 @@ class Main:
             nuevoDiccionarioToken = {}
             stringConcat = ""
             finalLinea = 0
+            keywords = False
 
             tipoChar = TipoChar()
             tipoChar.setTipo("PARENTESIS_INICIAL")
@@ -377,6 +380,7 @@ class Main:
             cont += 1
 
             if("EXCEPTKEYWORDS" in definicion.upper()):
+                keywords = True
                 finalLinea = definicion.upper().find("EXCEPTKEYWORDS")
 
             for char in definicion:
@@ -574,6 +578,8 @@ class Main:
             tipoChar.setTipo("ACEP")
             tipoChar.setCharacter(key)
             tipoChar.setValor(ord("#"))
+            if(keywords):
+                tipoChar.setKeywords(diccionarioKey)
             nuevoDiccionarioToken[cont] = tipoChar
             cont += 1
             tipoChar = TipoChar()
@@ -583,18 +589,18 @@ class Main:
             cont += 1
             diccionarioToken[key] = nuevoDiccionarioToken
 
-            print("----------------------------------------------------------------------------------------------------")
-            print("-----------------------------------------------Tokens-----------------------------------------------")
-            print("----------------------------------------------------------------------------------------------------")
-            print(key)
-            print(diccionarioToken[key])
-            for id, tipo in diccionarioToken[key].items():
-                print(id)
-                print(tipo.getTipoChar())
-                print(type(tipo.getValor()))
-            print()
-            print()
-            print()
+            # print("----------------------------------------------------------------------------------------------------")
+            # print("-----------------------------------------------Tokens-----------------------------------------------")
+            # print("----------------------------------------------------------------------------------------------------")
+            # print(key)
+            # print(diccionarioToken[key])
+            # for id, tipo in diccionarioToken[key].items():
+            #     print(id)
+            #     print(tipo.getTipoChar())
+            #     print(type(tipo.getValor()))
+            # print()
+            # print()
+            # print()
 
     def escribirScanner(self):
         f = open("scanner.py", "w", encoding="utf8")
@@ -625,24 +631,9 @@ class Scanner:
         self.pilaFinal = pickle.load(file)
         file.close()
 
-        print("----------------------------------------------------------------------------------------------------")
-        print("------------------------------------------------AFD-------------------------------------------------")
-        print("----------------------------------------------------------------------------------------------------")
-        print(self.pilaFinal)
-        print()
-        print()
-        print()
-
         file = open("diccioAceptacion", "rb")
         self.diccioAceptacion = pickle.load(file)
         file.close()
-        print("----------------------------------------------------------------------------------------------------")
-        print("---------------------------------------------ACEPTACION---------------------------------------------")
-        print("----------------------------------------------------------------------------------------------------")
-        print(self.diccioAceptacion)
-        print()
-        print()
-        print()
 
     def getStateNumber(self, array):
         for valor in self.pilaFinal:
@@ -665,7 +656,7 @@ class Scanner:
 
         return array
 
-    def getToken(self, estados):
+    def getToken(self, estados, acumulado):
         token = ""
         for transicion in self.pilaFinal:
             for estado in estados:
@@ -673,7 +664,15 @@ class Scanner:
                     for estadoInd in transicion[1]:
                         for key, valor in self.diccioAceptacion.items():
                             if(int(estadoInd) == int(key)):
-                                token = valor
+                                if(len(valor) > 1):
+                                    for key2, valor2, in valor[1].items():
+                                        if(str(acumulado) == str(key2)):
+                                            token = valor2
+                                            break
+                                        else:
+                                            token = valor[0]
+                                else:
+                                    token = valor[0]
 
                                 return token
 
@@ -695,7 +694,7 @@ class Scanner:
                 char = self.cadenaALeer[cont]
                 tokenDef += char
                 s = self.mover(s, char)
-                token = self.getToken(s)
+                token = self.getToken(s, tokenDef)
                 if(len(token) == 0):
                     self.print.pprint("La cadena ---" + str(tokenDef) + "--- es un token invalido!")
                     break
@@ -711,7 +710,7 @@ class Scanner:
             # Si el caracter siguiente no tiene transicion,
             # pero el caracter  actual si
             if(len(s2) == 0 and len(s) > 0):
-                token = self.getToken(s)
+                token = self.getToken(s, tokenDef)
                 # Si se encontro un token
                 if(len(token) == 0):
                     self.print.pprint("La cadena ---" + tokenDef + "--- es un token invalido!")
@@ -748,7 +747,7 @@ menu()
 def menu():
     # nombre = str(input("Ingrese el nombre del archivo Cocol que desea leer: "))
 
-    main = Main("Expr.ATG")
+    main = Main("Aritmetica.ATG")
     main.main()
 
 menu()
