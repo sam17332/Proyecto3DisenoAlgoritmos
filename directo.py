@@ -508,7 +508,10 @@ class Directo:
 
                     # diccionario de aceptacion
                     if(char.getTipo() == "ACEP"):
-                        self.diccioAceptacion[self.contador1] = char.getCharacter()
+                        array = [char.getCharacter()]
+                        if(char.getKeywords()):
+                            array.append(char.getKeywords())
+                        self.diccioAceptacion[self.contador1] = array
 
                     self.diccioSiguientePos[self.contador1] = []
                     self.contador1 += 1
