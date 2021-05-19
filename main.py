@@ -15,6 +15,9 @@ class Main:
         self.characters = []
         self.print = pprint.PrettyPrinter()
         self.lineasBloqueadas = []
+        self.tokens = []
+        self.producciones = []
+        self.posBloqueadasTemp = []
 
     def main(self):
         self.lectura()
@@ -43,10 +46,9 @@ class Main:
         # print()
         # print()
 
-    # '''
         self.construccionTokens()
         self.construccionProducciones()
-
+    '''
         tokensLen = len(self.json["TOKENS"])
 
         # Se crea un array con todos los tokens separando cada token por un "OR"
@@ -82,7 +84,7 @@ class Main:
         directoInst.arbolDirecto()
 
         self.escribirScanner()
-    # '''
+    '''
 
     def lectura(self):
         char = False
@@ -94,7 +96,6 @@ class Main:
         contador = 1
         for linea in archivo.readlines():
             linea = linea.replace("\n", "")
-            # linea = linea.replace(" ", "")
             if(linea[0:8] == "COMPILER"):
                 nombre = linea[8:len(linea)]
                 self.json[linea[0:8]] = nombre
@@ -205,6 +206,7 @@ class Main:
                 if(len(arrayToken) >1):
                     diccionarioToken = self.json["TOKENS"]
                     var = str(arrayToken[0].replace(" ", ""))
+                    self.tokens.append(var)
                     resultado = arrayToken[1]
                     if(resultado[len(resultado)-1] != "."):
                         resultado = self.defMultiLineaTokens(contador)
@@ -218,6 +220,16 @@ class Main:
                     diccionarioProduc = self.json["PRODUCTIONS"]
                     var = str(arrayProduc[0])
                     var = var.replace("  ", "")
+                    if("<" in var and ">" in var):
+                        acumulado = ""
+                        for i in var:
+                            if(i != "<"):
+                                acumulado += i
+                            else:
+                                self.producciones.append(acumulado.replace(" ", ""))
+                                break
+                    else:
+                        self.producciones.append(var.replace(" ", ""))
                     resultado = arrayProduc[1]
                     if(resultado[len(resultado)-1] != "."):
                         self.lineasBloqueadas.append(contador)
@@ -354,13 +366,125 @@ class Main:
 
         return diccionario, contador
 
+    def obtenerProduccionCompuesta(self, linea, index, prodSimple):
+        produccion = prodSimple
+        cont = 1
+        for i in linea:
+            if(int(cont) > int(index)+1):
+                if(i.isalpha()):
+                    self.posBloqueadasTemp.append(cont)
+                    produccion += i
+                else:
+                    break
+            cont += 1
+
+        return produccion
+
+    def replaceProduccion(self, acumulado):
+        acumulado = acumulado.replace(" ", "")
+        acumulado = acumulado.replace(")", "")
+
+        return acumulado
+
     def construccionProducciones(self):
-        x=1
+        diccionarioProd = self.json["PRODUCTIONS"]
+        # print(self.producciones)
+        # print(self.tokens)
+        for key in diccionarioProd:
+            print(key)
+            definicion = diccionarioProd[key]
+            # print(definicion)
+            arrayProd = []
+            # nuevoDiccionarioProd = {}
+            esSintax = False
+            esToken = False
+            conParams = False
+            sintax = ""
+            token = ""
+            params = ""
+            acumulado = ""
+            self.posBloqueadasTemp = []
+            for index in range(len(definicion)-1):
+                if(index not in self.posBloqueadasTemp):
+                    acumulado += definicion[index]
+                    # print(acumulado)
+                    actual = definicion[index]
+                    futuro = definicion[index+1]
+                    if(actual == "(" and futuro == "."):
+                        self.posBloqueadasTemp.append(index)
+                        self.posBloqueadasTemp.append(index+1)
+                        esSintax = True
+                    elif(actual == "." and futuro == ")"):
+                        # print("sintax")
+                        # print(sintax)
+                        self.posBloqueadasTemp.append(index)
+                        self.posBloqueadasTemp.append(index+1)
+                        arrayProd.append(sintax)
+                        sintax = ""
+                        esSintax = False
+                        acumulado = ""
+                    elif(esSintax):
+                        sintax += definicion[index]
+                    elif(actual == "'" or actual == '"'):
+                        acumulado = ""
+                        if(esToken == False):
+                            esToken = True
+                        else:
+                            # print(token)
+                            arrayProd.append(token)
+                            token = ""
+                            esToken = False
+                    elif(esToken):
+                        token += definicion[index]
+                    elif(conParams == True and actual == ">"):
+                        arrayProd.append(params)
+                        conParams = False
+                        acumulado = ""
+                        params = ""
+                    elif(conParams):
+                        if(actual != ">" and actual != "<"):
+                            params += definicion[index]
+                    elif(self.replaceProduccion(acumulado) in self.producciones and not(futuro.isalpha())):
+                        if(futuro == "<"):
+                            conParams = True
+                        arrayProd.append(self.replaceProduccion(acumulado))
+                        acumulado = ""
+                    elif(acumulado.replace(" ", "") in self.producciones):
+                        produccion = self.obtenerProduccionCompuesta(definicion, index, acumulado)
+                        arrayProd.append(produccion.replace(" ", ""))
+                        acumulado = ""
+                    elif(acumulado.replace(" ", "") in self.tokens and not(futuro.isalpha())):
+                        # print("token")
+                        # print(acumulado)
+                        arrayProd.append(acumulado.replace(" ", ""))
+                        acumulado = ""
+                    elif(actual == "["):
+                        arrayProd.append(actual)
+                        acumulado = ""
+                    elif(actual == "]"):
+                        arrayProd.append(actual)
+                        acumulado = ""
+                    elif(actual == "{"):
+                        arrayProd.append(actual)
+                        acumulado = ""
+                    elif(actual == "}"):
+                        arrayProd.append(actual)
+                        acumulado = ""
+                    elif(actual == "|"):
+                        arrayProd.append(actual)
+                        acumulado = ""
+            print("-----FIN-----")
+            print(key)
+            # print(acumulado)
+            print(arrayProd)
+            print()
+            # diccionarioProd[key] = nuevoDiccionarioProd
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
-        diccionarioKey = self.json["KEYWORDS"]
         diccionarioCharacters = self.json["CHARACTERS"]
+        if("KEYWORDS" in self.json):
+            diccionarioKey = self.json["KEYWORDS"]
         esString1 = False
         esString2 = False
         for key in diccionarioToken:
@@ -747,7 +871,7 @@ menu()
 def menu():
     # nombre = str(input("Ingrese el nombre del archivo Cocol que desea leer: "))
 
-    main = Main("Aritmetica.ATG")
+    main = Main("Calc.ATG")
     main.main()
 
 menu()
