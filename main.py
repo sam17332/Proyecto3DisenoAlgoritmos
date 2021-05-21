@@ -5,6 +5,7 @@
 import pprint
 from funciones import *
 from tipoChar import *
+from tipoCharProd import *
 from postfix import *
 from directo import *
 
@@ -18,6 +19,7 @@ class Main:
         self.tokens = []
         self.producciones = []
         self.posBloqueadasTemp = []
+        self.diccionarioProdFinal = {}
 
     def main(self):
         self.lectura()
@@ -391,7 +393,7 @@ class Main:
         # print(self.producciones)
         # print(self.tokens)
         for key in diccionarioProd:
-            print(key)
+            # print(key)
             definicion = diccionarioProd[key]
             # print(definicion)
             arrayProd = []
@@ -403,7 +405,24 @@ class Main:
             token = ""
             params = ""
             acumulado = ""
+            self.diccionarioProdFinal[key] = []
+            arrayProdTemp = self.diccionarioProdFinal[key]
             self.posBloqueadasTemp = []
+            if("<" in key and ">" in key):
+                index1 = key.find("<")
+                index2 = key.find(">")
+                keyLimpio = key[0:index1]
+                parametros = key[index1+1:index2]
+                tipoCharProd = TipoCharProd()
+                tipoCharProd.setTipo("NOMBRE")
+                tipoCharProd.setValor(keyLimpio)
+                tipoCharProd.setParametros(parametros)
+                arrayProdTemp.append(tipoCharProd)
+            else:
+                tipoCharProd = TipoCharProd()
+                tipoCharProd.setTipo("NOMBRE")
+                tipoCharProd.setValor(key)
+                arrayProdTemp.append(tipoCharProd)
             for index in range(len(definicion)-1):
                 if(index not in self.posBloqueadasTemp):
                     acumulado += definicion[index]
@@ -419,6 +438,10 @@ class Main:
                         # print(sintax)
                         self.posBloqueadasTemp.append(index)
                         self.posBloqueadasTemp.append(index+1)
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("ACTION")
+                        tipoCharProd.setValor(sintax)
+                        arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(sintax)
                         sintax = ""
                         esSintax = False
@@ -431,12 +454,24 @@ class Main:
                             esToken = True
                         else:
                             # print(token)
-                            arrayProd.append(token)
+                            if(token in self.tokens):
+                                numToken = self.tokens.index(token) + 1
+                            else:
+                                self.tokens.append(token)
+                                numToken = len(self.tokens)
+                            tipoCharProd = TipoCharProd()
+                            tipoCharProd.setTipo("TERMINAL")
+                            tipoCharProd.setValor(token)
+                            # print("token: ", token)
+                            tipoCharProd.setNumToken(numToken)
+                            arrayProdTemp.append(tipoCharProd)
                             token = ""
                             esToken = False
                     elif(esToken):
                         token += definicion[index]
                     elif(conParams == True and actual == ">"):
+                        tipoCharProd.setParametros(params)
+                        arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(params)
                         conParams = False
                         acumulado = ""
@@ -445,40 +480,88 @@ class Main:
                         if(actual != ">" and actual != "<"):
                             params += definicion[index]
                     elif(self.replaceProduccion(acumulado) in self.producciones and not(futuro.isalpha())):
+                        acumNuevo = self.replaceProduccion(acumulado)
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("NOTERMINAL")
+                        tipoCharProd.setValor(acumNuevo)
                         if(futuro == "<"):
                             conParams = True
-                        arrayProd.append(self.replaceProduccion(acumulado))
+                        else:
+                            arrayProdTemp.append(tipoCharProd)
+                        arrayProd.append(acumNuevo)
                         acumulado = ""
-                    elif(acumulado.replace(" ", "") in self.producciones):
+                    elif(self.replaceProduccion(acumulado) in self.producciones):
                         produccion = self.obtenerProduccionCompuesta(definicion, index, acumulado)
-                        arrayProd.append(produccion.replace(" ", ""))
+                        produccion = self.replaceProduccion(produccion)
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("NOTERMINAL")
+                        tipoCharProd.setValor(produccion)
+                        arrayProdTemp.append(tipoCharProd)
+                        arrayProd.append(produccion)
                         acumulado = ""
-                    elif(acumulado.replace(" ", "") in self.tokens and not(futuro.isalpha())):
+                    elif(self.replaceProduccion(acumulado) in self.tokens and not(futuro.isalpha())):
                         # print("token")
                         # print(acumulado)
-                        arrayProd.append(acumulado.replace(" ", ""))
+                        acumuladoNuevo = self.replaceProduccion(acumulado)
+                        if(acumuladoNuevo in self.tokens):
+                            numToken = self.tokens.index(acumuladoNuevo) + 1
+                        else:
+                            self.tokens.append(acumuladoNuevo)
+                            numToken = len(self.tokens)
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("TERMINAL")
+                        tipoCharProd.setValor(acumuladoNuevo)
+                        # print("token: ", acumulado)
+                        tipoCharProd.setNumToken(numToken)
+                        arrayProdTemp.append(tipoCharProd)
+                        arrayProd.append(acumuladoNuevo)
                         acumulado = ""
                     elif(actual == "["):
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("LENCERRADO")
+                        tipoCharProd.setValor("[")
+                        arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "]"):
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("RENCERRADO")
+                        tipoCharProd.setValor("]")
+                        arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "{"):
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("LENCERRADO")
+                        tipoCharProd.setValor("{")
+                        arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "}"):
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("RENCERRADO")
+                        tipoCharProd.setValor("}")
+                        arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "|"):
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("OR")
+                        tipoCharProd.setValor("|")
+                        arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
             print("-----FIN-----")
             print(key)
             # print(acumulado)
-            print(arrayProd)
-            print()
+            # print(arrayProd)
+            # print()
             # diccionarioProd[key] = nuevoDiccionarioProd
+            # print(self.diccionarioProdFinal)
+            for obj in self.diccionarioProdFinal[key]:
+                print(obj.getTipoCharProd())
+            print()
+            print()
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
