@@ -416,7 +416,6 @@ class Main:
             definicion = diccionarioProd[key]
             # print(definicion)
             arrayProd = []
-            # nuevoDiccionarioProd = {}
             esSintax = False
             esToken = False
             conParams = False
@@ -468,7 +467,7 @@ class Main:
                         acumulado = ""
                     elif(esSintax):
                         sintax += definicion[index]
-                    if(actual == "(" and futuro == "$"):
+                    elif(actual == "(" and futuro == "$"):
                         self.posBloqueadasTemp.append(index)
                         self.posBloqueadasTemp.append(index+1)
                         tipoCharProd = TipoCharProd()
@@ -612,11 +611,7 @@ class Main:
                         acumulado = ""
             # print("-----FIN-----")
             # print(key)
-            # print(acumulado)
-            # print(arrayProd)
             # print()
-            # diccionarioProd[key] = nuevoDiccionarioProd
-            # print(self.diccionarioProdFinal)
             # for obj in self.diccionarioProdFinal[key]:
             #     print(obj.getTipoCharProd())
             # print()
