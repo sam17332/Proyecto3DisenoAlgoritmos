@@ -50,7 +50,7 @@ class Main:
 
         self.construccionTokens()
         self.construccionProducciones()
-    '''
+    # '''
         tokensLen = len(self.json["TOKENS"])
 
         # Se crea un array con todos los tokens separando cada token por un "OR"
@@ -86,7 +86,7 @@ class Main:
         directoInst.arbolDirecto()
 
         self.escribirScanner()
-    '''
+    # '''
 
     def lectura(self):
         char = False
@@ -370,9 +370,9 @@ class Main:
 
     def obtenerProduccionCompuesta(self, linea, index, prodSimple):
         produccion = prodSimple
-        cont = 1
+        cont = 0
         for i in linea:
-            if(int(cont) > int(index)+1):
+            if(int(cont) > int(index)):
                 if(i.isalpha()):
                     self.posBloqueadasTemp.append(cont)
                     produccion += i
@@ -402,6 +402,7 @@ class Main:
             esToken = False
             conParams = False
             sintax = ""
+            exprecion = ""
             token = ""
             params = ""
             acumulado = ""
@@ -448,6 +449,25 @@ class Main:
                         acumulado = ""
                     elif(esSintax):
                         sintax += definicion[index]
+                    if(actual == "(" and futuro == "$"):
+                        self.posBloqueadasTemp.append(index)
+                        self.posBloqueadasTemp.append(index+1)
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("LOR")
+                        tipoCharProd.setValor("($")
+                        arrayProdTemp.append(tipoCharProd)
+                        arrayProd.append("($")
+                    elif(actual == "$" and futuro == ")"):
+                        # print("sintax")
+                        # print(sintax)
+                        self.posBloqueadasTemp.append(index)
+                        self.posBloqueadasTemp.append(index+1)
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("ROR")
+                        tipoCharProd.setValor("$)")
+                        arrayProdTemp.append(tipoCharProd)
+                        arrayProd.append("$)")
+                        acumulado = ""
                     elif(actual == "'" or actual == '"'):
                         acumulado = ""
                         if(esToken == False):
@@ -496,7 +516,20 @@ class Main:
                         tipoCharProd = TipoCharProd()
                         tipoCharProd.setTipo("NOTERMINAL")
                         tipoCharProd.setValor(produccion)
-                        arrayProdTemp.append(tipoCharProd)
+                        indexProd = definicion.find(produccion)
+                        acum = ""
+                        contLocal = 0
+                        boolLocal = False
+                        definicionLocal = definicion[indexProd:len(definicion)]
+                        for i in definicionLocal:
+                            acum += i
+                            contLocal += 1
+                            if(acum == produccion):
+                                if(definicionLocal[contLocal] == "<"):
+                                    conParams = True
+                                    boolLocal = True
+                        if(boolLocal == False):
+                            arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(produccion)
                         acumulado = ""
                     elif(self.replaceProduccion(acumulado) in self.tokens and not(futuro.isalpha())):
@@ -518,28 +551,28 @@ class Main:
                         acumulado = ""
                     elif(actual == "["):
                         tipoCharProd = TipoCharProd()
-                        tipoCharProd.setTipo("LENCERRADO")
+                        tipoCharProd.setTipo("LENCERRADOC")
                         tipoCharProd.setValor("[")
                         arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "]"):
                         tipoCharProd = TipoCharProd()
-                        tipoCharProd.setTipo("RENCERRADO")
+                        tipoCharProd.setTipo("RENCERRADOC")
                         tipoCharProd.setValor("]")
                         arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "{"):
                         tipoCharProd = TipoCharProd()
-                        tipoCharProd.setTipo("LENCERRADO")
+                        tipoCharProd.setTipo("LENCERRADOL")
                         tipoCharProd.setValor("{")
                         arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "}"):
                         tipoCharProd = TipoCharProd()
-                        tipoCharProd.setTipo("RENCERRADO")
+                        tipoCharProd.setTipo("RENCERRADOL")
                         tipoCharProd.setValor("}")
                         arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
@@ -548,6 +581,13 @@ class Main:
                         tipoCharProd = TipoCharProd()
                         tipoCharProd.setTipo("OR")
                         tipoCharProd.setValor("|")
+                        arrayProdTemp.append(tipoCharProd)
+                        arrayProd.append(actual)
+                        acumulado = ""
+                    elif(actual == "#"):
+                        tipoCharProd = TipoCharProd()
+                        tipoCharProd.setTipo("APPEND")
+                        tipoCharProd.setValor("#")
                         arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
@@ -823,6 +863,7 @@ class Scanner:
         self.cadenaALeer = ""
         self.nombreDocALeer = documentoALeer
         self.print = pprint.PrettyPrinter()
+        self.tokensLeidos = []
 
     def main(self):
         self.openFiles()
@@ -833,6 +874,10 @@ class Scanner:
 
         self.simular()
 
+        file = open("tokensLeidos", 'wb')
+        pickle.dump(self.tokensLeidos, file)
+        file.close()
+
     def openFiles(self):
         file = open("pilaFinal", "rb")
         self.pilaFinal = pickle.load(file)
@@ -841,6 +886,7 @@ class Scanner:
         file = open("diccioAceptacion", "rb")
         self.diccioAceptacion = pickle.load(file)
         file.close()
+
 
     def getStateNumber(self, array):
         for valor in self.pilaFinal:
@@ -906,6 +952,7 @@ class Scanner:
                     self.print.pprint("La cadena ---" + str(tokenDef) + "--- es un token invalido!")
                     break
                 self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
+                self.tokensLeidos.append(token)
                 break
 
             char1 = self.cadenaALeer[cont]
@@ -927,6 +974,7 @@ class Scanner:
                     cont -= 1
                 else:
                     self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
+                    self.tokensLeidos.append(token)
                     s = [0]
                     s2 = [0]
                     tokenDef = ""
@@ -954,7 +1002,7 @@ menu()
 def menu():
     # nombre = str(input("Ingrese el nombre del archivo Cocol que desea leer: "))
 
-    main = Main("Calc.ATG")
+    main = Main("Expr.ATG")
     main.main()
 
 menu()
