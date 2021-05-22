@@ -7,6 +7,7 @@ from funciones import *
 from tipoChar import *
 from tipoCharProd import *
 from postfix import *
+from postfixProd import *
 from directo import *
 
 class Main:
@@ -86,6 +87,24 @@ class Main:
         directoInst.arbolDirecto()
 
         self.escribirScanner()
+
+
+        cont = 0
+        for key, produccion in self.diccionarioProdFinal.items():
+            cont += 1
+            print(key)
+            # print(produccion)
+            postfixInstProd = PostfixProd()
+            postfixProd = postfixInstProd.toPostfix(produccion)
+            # print(postfixProd)
+            for index in postfixProd:
+                print(index.getTipoCharProd())
+            print()
+            print()
+            print()
+            print()
+            # if(cont == 4):
+            #     break
     # '''
 
     def lectura(self):
@@ -591,17 +610,17 @@ class Main:
                         arrayProdTemp.append(tipoCharProd)
                         arrayProd.append(actual)
                         acumulado = ""
-            print("-----FIN-----")
-            print(key)
+            # print("-----FIN-----")
+            # print(key)
             # print(acumulado)
             # print(arrayProd)
             # print()
             # diccionarioProd[key] = nuevoDiccionarioProd
             # print(self.diccionarioProdFinal)
-            for obj in self.diccionarioProdFinal[key]:
-                print(obj.getTipoCharProd())
-            print()
-            print()
+            # for obj in self.diccionarioProdFinal[key]:
+            #     print(obj.getTipoCharProd())
+            # print()
+            # print()
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
@@ -853,8 +872,10 @@ class Main:
         f = open("scanner.py", "w", encoding="utf8")
         f.write(
             """
+
 import pickle5 as pickle
 import pprint
+from tokenScanner import *
 
 class Scanner:
     def __init__(self, documentoALeer):
@@ -952,7 +973,10 @@ class Scanner:
                     self.print.pprint("La cadena ---" + str(tokenDef) + "--- es un token invalido!")
                     break
                 self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
-                self.tokensLeidos.append(token)
+                tokenScanner = TokenScanner()
+                tokenScanner.setTipo(token)
+                tokenScanner.setTipo(tokenDef)
+                self.tokensLeidos.append(tokenScanner)
                 break
 
             char1 = self.cadenaALeer[cont]
@@ -974,7 +998,10 @@ class Scanner:
                     cont -= 1
                 else:
                     self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
-                    self.tokensLeidos.append(token)
+                    tokenScanner = TokenScanner()
+                    tokenScanner.setTipo(token)
+                    tokenScanner.setTipo(tokenDef)
+                    self.tokensLeidos.append(tokenScanner)
                     s = [0]
                     s2 = [0]
                     tokenDef = ""
