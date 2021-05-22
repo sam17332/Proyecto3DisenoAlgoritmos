@@ -322,15 +322,13 @@ class Directo:
         start_time = time.perf_counter()
         s = [0]
         for x in self.cadena:
-            s = self.mover(s, x)
-        end_time = time.perf_counter()
-        idfinal = self.getEstadosFinales()
+            end_time = time.perf_counter()
+            idfinal = self.getEstadosFinales()
 
         if(len(s) > 0):
             if(s[0] in idfinal):
                 print("------------------SIMULACION-------------------")
                 print("La cadena ", self.cadena, " si es aceptada por el AFD")
-                print("--- %s segundos ---" % (end_time - start_time))
                 print("-----------------------------------------------")
                 print("")
 
