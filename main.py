@@ -21,6 +21,7 @@ class Main:
         self.producciones = []
         self.posBloqueadasTemp = []
         self.diccionarioProdFinal = {}
+        self.primeraPos = {}
 
     def main(self):
         self.lectura()
@@ -51,7 +52,7 @@ class Main:
 
         self.construccionTokens()
         self.construccionProducciones()
-    # '''
+    '''
         tokensLen = len(self.json["TOKENS"])
 
         # Se crea un array con todos los tokens separando cada token por un "OR"
@@ -105,7 +106,7 @@ class Main:
             print()
             # if(cont == 4):
             #     break
-    # '''
+    '''
 
     def lectura(self):
         char = False
@@ -241,15 +242,18 @@ class Main:
                     diccionarioProduc = self.json["PRODUCTIONS"]
                     var = str(arrayProduc[0])
                     var = var.replace("  ", "")
+                    varFinal = ""
                     if("<" in var and ">" in var):
                         acumulado = ""
                         for i in var:
                             if(i != "<"):
                                 acumulado += i
                             else:
+                                varFinal = acumulado.replace(" ", "")
                                 self.producciones.append(acumulado.replace(" ", ""))
                                 break
                     else:
+                        varFinal = var.replace(" ", "")
                         self.producciones.append(var.replace(" ", ""))
                     resultado = arrayProduc[1]
                     if(resultado[len(resultado)-1] != "."):
@@ -258,7 +262,7 @@ class Main:
                     resultado = resultado.replace("  ", "")
                     resultado = resultado.replace("(. ", "(.")
                     resultado = resultado.replace(" .)", ".)")
-                    diccionarioProduc[var] = str(resultado)
+                    diccionarioProduc[varFinal] = str(resultado)
 
             contador += 1
         archivo.close()
@@ -407,12 +411,60 @@ class Main:
 
         return acumulado
 
+    def primera(self):
+        for x in reversed(self.producciones):
+            print(x)
+            print("----")
+            soyOR = False
+            yaEntreNT = False
+            yaEntreT = False
+            for index in range(len(self.diccionarioProdFinal[x])):
+                print(index)
+                llave = self.diccionarioProdFinal[x][index]
+                print(llave.getTipoCharProd())
+                arrayTemp = []
+                if llave.getTipo() == "NOTERMINAL":
+                    self.primeraPos[x] = self.primeraPos[llave.getValor()]
+                    break
+                elif llave.getTipo() == "TERMINAL":
+                    indexLlave = llave.getValor()
+                    print("indexLlave: " + indexLlave)
+                    arrayTemp.append(llave.getValor())
+                    self.primeraPos[x] = arrayTemp
+                    for i in range(index+1, len(self.diccionarioProdFinal[x])):
+                        print("i actual")
+                        print(self.diccionarioProdFinal[x][i].getTipoCharProd())
+                        llave2 = self.diccionarioProdFinal[x][i]
+                        if(soyOR and llave2.getTipo() != "ROR"):
+                            if(llave2.getTipo() == "NOTERMINAL" and yaEntreNT == False):
+                                yaEntreNT = True
+                                for primPos in self.primeraPos[llave2.getValor()]:
+                                    arrayTemp.append(primPos)
+                                    self.primeraPos[x] = arrayTemp
+                            if(llave2.getTipo() == "TERMINAL" and yaEntreT == False):
+                                yaEntreT = True
+                                arrayTemp.append(llave2.getValor())
+                                self.primeraPos[x] = arrayTemp
+                        elif(llave2.getTipo() == "LOR"):
+                            soyOR = True
+                        elif(llave2.getTipo() == "ROR"):
+                            soyOR = False
+                    break
+            print()
+            print()
+            print()
+            print()
+        print(self.primeraPos)
+
+
     def construccionProducciones(self):
         diccionarioProd = self.json["PRODUCTIONS"]
         # print(self.producciones)
         # print(self.tokens)
         for key in diccionarioProd:
+            # print("key")
             # print(key)
+            # print('---')
             definicion = diccionarioProd[key]
             # print(definicion)
             arrayProd = []
@@ -475,6 +527,7 @@ class Main:
                         tipoCharProd.setValor("($")
                         arrayProdTemp.append(tipoCharProd)
                         arrayProd.append("($")
+                        acumulado = ""
                     elif(actual == "$" and futuro == ")"):
                         # print("sintax")
                         # print(sintax)
@@ -519,6 +572,7 @@ class Main:
                             params += definicion[index]
                     elif(self.replaceProduccion(acumulado) in self.producciones and not(futuro.isalpha())):
                         acumNuevo = self.replaceProduccion(acumulado)
+                        # print(acumNuevo)
                         tipoCharProd = TipoCharProd()
                         tipoCharProd.setTipo("NOTERMINAL")
                         tipoCharProd.setValor(acumNuevo)
@@ -611,11 +665,17 @@ class Main:
                         acumulado = ""
             # print("-----FIN-----")
             # print(key)
-            # print()
-            # for obj in self.diccionarioProdFinal[key]:
-            #     print(obj.getTipoCharProd())
-            # print()
-            # print()
+            # print("arrayProd")
+            # print(arrayProd)
+            # print("arrayProdTemp")
+            # print(arrayProdTemp)
+        #     for obj in self.diccionarioProdFinal[key]:
+        #         # print(obj)
+        #         print(obj.getTipoCharProd())
+        #     print()
+        #     print()
+        self.primera()
+
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
@@ -970,7 +1030,7 @@ class Scanner:
                 self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
                 tokenScanner = TokenScanner()
                 tokenScanner.setTipo(token)
-                tokenScanner.setTipo(tokenDef)
+                tokenScanner.setValor(tokenDef)
                 self.tokensLeidos.append(tokenScanner)
                 break
 
@@ -995,7 +1055,7 @@ class Scanner:
                     self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
                     tokenScanner = TokenScanner()
                     tokenScanner.setTipo(token)
-                    tokenScanner.setTipo(tokenDef)
+                    tokenScanner.setTipo(setValor)
                     self.tokensLeidos.append(tokenScanner)
                     s = [0]
                     s2 = [0]
