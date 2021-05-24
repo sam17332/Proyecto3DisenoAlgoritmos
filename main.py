@@ -476,8 +476,7 @@ class Main:
             token = ""
             params = ""
             acumulado = ""
-            self.diccionarioProdFinal[key] = []
-            arrayProdTemp = self.diccionarioProdFinal[key]
+            arrayProdTemp = []
             self.posBloqueadasTemp = []
             if("<" in key and ">" in key):
                 index1 = key.find("<")
@@ -659,23 +658,48 @@ class Main:
                         arrayProd.append(actual)
                         acumulado = ""
                     elif(actual == "#"):
+                        # tipoCharProd = TipoCharProd()
+                        # tipoCharProd.setTipo("APPEND")
+                        # tipoCharProd.setValor("#")
+                        # arrayProdTemp.append(tipoCharProd)
+                        # arrayProd.append(actual)
+                        acumulado = ""
+            arrayLocal =[]
+            for objIndex in range(len(arrayProdTemp)):
+                actualLocal = arrayProdTemp[objIndex]
+                if(objIndex == len(arrayProdTemp)-1):
+                    futuroLocal = arrayProdTemp[objIndex]
+                else:
+                    futuroLocal = arrayProdTemp[objIndex+1]
+                arrayLocal.append(actualLocal)
+                if(not isinstance(futuroLocal,str)):
+                    if(
+                        (futuroLocal.getTipo() == "ACTION"
+                        or futuroLocal.getTipo() == "TERMINAL"
+                        or futuroLocal.getTipo() == "NOTERMINAL")
+                        and actualLocal.getTipo() != "OR"
+                        and actualLocal.getTipo() != "LOR"
+                        and actualLocal.getTipo() != "LENCERRADOC"
+                        and actualLocal.getTipo() != "LENCERRADOL"
+                        and actualLocal.getTipo() != "NOMBRE"
+                        and objIndex != len(arrayProdTemp)-1
+                    ):
                         tipoCharProd = TipoCharProd()
                         tipoCharProd.setTipo("APPEND")
                         tipoCharProd.setValor("#")
-                        arrayProdTemp.append(tipoCharProd)
-                        arrayProd.append(actual)
-                        acumulado = ""
+                        arrayLocal.append(tipoCharProd)
             # print("-----FIN-----")
             # print(key)
             # print("arrayProd")
             # print(arrayProd)
             # print("arrayProdTemp")
             # print(arrayProdTemp)
-            # for obj in self.diccionarioProdFinal[key]:
+            # for obj in arrayLocal:
             #     # print(obj)
             #     print(obj.getTipoCharProd())
             # print()
             # print()
+            self.diccionarioProdFinal[key] = arrayLocal
         self.primera()
         self.lecturaPrimera()
 
@@ -723,18 +747,14 @@ class Main:
                 elif(objProdActual.getTipo() == "LENCERRADOC" and objProdFuturo.getTipo() == "TERMINAL"):
                     for i in objProdFuturo.getPrimeraPos():
                         objProdActual.setPrimeraPos(i)
-                # elif(objProdActual.getTipo() == "LENCERRADOC" and objProdFuturo.getTipo() == "NOTERMINAL"):
-                #     for i in self.primeraPos[objProdFuturo.getValor()]:
-                #         objProdActual.setPrimeraPos(i)
-                #     break
-        for i, proddd in self.diccionarioProdFinal.items():
-            print(i)
-            for prodobj in proddd:
-                print(prodobj.getTipoCharProd())
-            print()
-            print()
-            print()
-            print()
+        # for i, proddd in self.diccionarioProdFinal.items():
+        #     print(i)
+        #     for prodobj in proddd:
+        #         print(prodobj.getTipoCharProd())
+        #     print()
+        #     print()
+        #     print()
+        #     print()
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
