@@ -413,27 +413,27 @@ class Main:
 
     def primera(self):
         for x in reversed(self.producciones):
-            print(x)
-            print("----")
+            # print(x)
+            # print("----")
             soyOR = False
             yaEntreNT = False
             yaEntreT = False
             for index in range(len(self.diccionarioProdFinal[x])):
-                print(index)
+                # print(index)
                 llave = self.diccionarioProdFinal[x][index]
-                print(llave.getTipoCharProd())
+                # print(llave.getTipoCharProd())
                 arrayTemp = []
                 if llave.getTipo() == "NOTERMINAL":
                     self.primeraPos[x] = self.primeraPos[llave.getValor()]
                     break
                 elif llave.getTipo() == "TERMINAL":
                     indexLlave = llave.getValor()
-                    print("indexLlave: " + indexLlave)
+                    # print("indexLlave: " + indexLlave)
                     arrayTemp.append(llave.getValor())
                     self.primeraPos[x] = arrayTemp
                     for i in range(index+1, len(self.diccionarioProdFinal[x])):
-                        print("i actual")
-                        print(self.diccionarioProdFinal[x][i].getTipoCharProd())
+                        # print("i actual")
+                        # print(self.diccionarioProdFinal[x][i].getTipoCharProd())
                         llave2 = self.diccionarioProdFinal[x][i]
                         if(soyOR and llave2.getTipo() != "ROR"):
                             if(llave2.getTipo() == "NOTERMINAL" and yaEntreNT == False):
@@ -450,11 +450,11 @@ class Main:
                         elif(llave2.getTipo() == "ROR"):
                             soyOR = False
                     break
-            print()
-            print()
-            print()
-            print()
-        print(self.primeraPos)
+            # print()
+            # print()
+            # print()
+            # print()
+        # print(self.primeraPos)
 
 
     def construccionProducciones(self):
@@ -552,6 +552,7 @@ class Main:
                                 numToken = len(self.tokens)
                             tipoCharProd = TipoCharProd()
                             tipoCharProd.setTipo("TERMINAL")
+                            tipoCharProd.setPrimeraPos(token)
                             tipoCharProd.setValor(token)
                             # print("token: ", token)
                             tipoCharProd.setNumToken(numToken)
@@ -616,6 +617,7 @@ class Main:
                         tipoCharProd = TipoCharProd()
                         tipoCharProd.setTipo("TERMINAL")
                         tipoCharProd.setValor(acumuladoNuevo)
+                        tipoCharProd.setPrimeraPos(acumuladoNuevo)
                         # print("token: ", acumulado)
                         tipoCharProd.setNumToken(numToken)
                         arrayProdTemp.append(tipoCharProd)
@@ -669,13 +671,70 @@ class Main:
             # print(arrayProd)
             # print("arrayProdTemp")
             # print(arrayProdTemp)
-        #     for obj in self.diccionarioProdFinal[key]:
-        #         # print(obj)
-        #         print(obj.getTipoCharProd())
-        #     print()
-        #     print()
+            # for obj in self.diccionarioProdFinal[key]:
+            #     # print(obj)
+            #     print(obj.getTipoCharProd())
+            # print()
+            # print()
         self.primera()
+        self.lecturaPrimera()
 
+    def lecturaPrimera(self):
+        for key in self.diccionarioProdFinal:
+            estoyOr = False
+            yaAgregue = False
+            definicion = self.diccionarioProdFinal[key]
+            # print("key")
+            # print(key)
+            for objProdIndex in range(len(definicion)):
+            #     print(definicion[objProdIndex].getTipoCharProd())
+            # print()
+            # print()
+                objProdActual = definicion[objProdIndex]
+                objProdFuturo = ""
+                if(objProdIndex != len(definicion)-1):
+                    objProdFuturo = definicion[objProdIndex+1]
+                if(objProdActual.getTipo() == "LENCERRADOL" and objProdFuturo.getTipo() == "NOTERMINAL"):
+                    for i in self.primeraPos[objProdFuturo.getValor()]:
+                        objProdActual.setPrimeraPos(i)
+                    break
+                elif(objProdActual.getTipo() == "LOR" and objProdFuturo.getTipo() == "NOTERMINAL"):
+                    for i in self.primeraPos[objProdFuturo.getValor()]:
+                        objProdActual.setPrimeraPos(i)
+                elif(objProdActual.getTipo() == "LENCERRADOL" and objProdFuturo.getTipo() == "LOR"):
+                    for i in range(objProdIndex+1, len(definicion)):
+                        if(estoyOr and yaAgregue == False):
+                            if(definicion[i].getTipo() == "TERMINAL" or definicion[i].getTipo() == "NOTERMINAL"):
+                                yaAgregue == True
+                                if(definicion[i].getTipo() == "TERMINAL"):
+                                    defi = definicion[i].getPrimeraPos()
+                                    for defiPos in defi:
+                                        objProdActual.setPrimeraPos(defiPos)
+                        elif(definicion[i].getTipo() == "LOR"):
+                            estoyOr = True
+                        elif(definicion[i].getTipo() == "ROR"):
+                            estoyOr = False
+
+                        if(objProdActual.getTipo() == "RENCERRADOL"):
+                            break
+                elif(objProdActual.getTipo() == "LOR" and objProdFuturo.getTipo() == "TERMINAL"):
+                    for i in objProdFuturo.getPrimeraPos():
+                        objProdActual.setPrimeraPos(i)
+                elif(objProdActual.getTipo() == "LENCERRADOC" and objProdFuturo.getTipo() == "TERMINAL"):
+                    for i in objProdFuturo.getPrimeraPos():
+                        objProdActual.setPrimeraPos(i)
+                # elif(objProdActual.getTipo() == "LENCERRADOC" and objProdFuturo.getTipo() == "NOTERMINAL"):
+                #     for i in self.primeraPos[objProdFuturo.getValor()]:
+                #         objProdActual.setPrimeraPos(i)
+                #     break
+        for i, proddd in self.diccionarioProdFinal.items():
+            print(i)
+            for prodobj in proddd:
+                print(prodobj.getTipoCharProd())
+            print()
+            print()
+            print()
+            print()
 
     def construccionTokens(self):
         diccionarioToken = self.json["TOKENS"]
