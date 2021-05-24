@@ -34,7 +34,8 @@ class TipoCharProd:
         return self.primeraPos
 
     def setPrimeraPos(self, pos):
-        self.primeraPos.append(pos)
+        if(pos not in self.primeraPos):
+            self.primeraPos.append(pos)
 
     def getTipoCharProd(self):
         return [self.tipo, self.valor, self.numToken, self.parametros, self.primeraPos]
