@@ -9,9 +9,10 @@ from tipoCharProd import *
 from postfix import *
 from postfixProd import *
 from directo import *
+from scanner import *
 
 class Main:
-    def __init__(self, nombreArchivo):
+    def __init__(self, nombreArchivo, txt):
         self.nombreArchivo = nombreArchivo
         self.json = {}
         self.characters = []
@@ -22,6 +23,7 @@ class Main:
         self.posBloqueadasTemp = []
         self.diccionarioProdFinal = {}
         self.primeraPos = {}
+        self.txt = txt
 
     def main(self):
         self.lectura()
@@ -52,7 +54,7 @@ class Main:
 
         self.construccionTokens()
         self.construccionProducciones()
-    '''
+    # '''
         tokensLen = len(self.json["TOKENS"])
 
         # Se crea un array con todos los tokens separando cada token por un "OR"
@@ -87,8 +89,15 @@ class Main:
         directoInst = Directo(postfix)
         directoInst.arbolDirecto()
 
-        self.escribirScanner()
+        # Se hace pickle del array que contiene los tokens.
+        # tantos los anonimos como los definidos en el ATG.
+        file = open("arrayTokens", "wb")
+        pickle.dump(self.tokens, file)
+        file.close()
 
+        self.escribirScanner()
+        scannerInst = Scanner(self.txt)
+        scannerInst.main()
 
         cont = 0
         for key, produccion in self.diccionarioProdFinal.items():
@@ -106,7 +115,7 @@ class Main:
             print()
             # if(cont == 4):
             #     break
-    '''
+    # '''
 
     def lectura(self):
         char = False
@@ -1006,7 +1015,6 @@ class Main:
         f = open("scanner.py", "w", encoding="utf8")
         f.write(
             """
-
 import pickle5 as pickle
 import pprint
 from tokenScanner import *
@@ -1019,6 +1027,7 @@ class Scanner:
         self.nombreDocALeer = documentoALeer
         self.print = pprint.PrettyPrinter()
         self.tokensLeidos = []
+        self.tokens = []
 
     def main(self):
         self.openFiles()
@@ -1029,6 +1038,10 @@ class Scanner:
 
         self.simular()
 
+        print("tokens leidos")
+        for i in self.tokensLeidos:
+            print(i.getTokenScanner())
+        print()
         file = open("tokensLeidos", 'wb')
         pickle.dump(self.tokensLeidos, file)
         file.close()
@@ -1040,6 +1053,10 @@ class Scanner:
 
         file = open("diccioAceptacion", "rb")
         self.diccioAceptacion = pickle.load(file)
+        file.close()
+
+        file = open("arrayTokens", "rb")
+        self.tokens = pickle.load(file)
         file.close()
 
 
@@ -1105,11 +1122,22 @@ class Scanner:
                 token = self.getToken(s, tokenDef)
                 if(len(token) == 0):
                     self.print.pprint("La cadena ---" + str(tokenDef) + "--- es un token invalido!")
+                    if(tokenDef != " "):
+                        tokenScanner = TokenScanner()
+                        tokenScanner.setTipo("ANONIMO")
+                        tokenScanner.setValor(tokenDef)
+                        if(tokenDef in self.tokens):
+                            posi = self.tokens.index(tokenDef) + 1
+                            tokenScanner.setID(posi)
+                        self.tokensLeidos.append(tokenScanner)
                     break
                 self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
                 tokenScanner = TokenScanner()
                 tokenScanner.setTipo(token)
                 tokenScanner.setValor(tokenDef)
+                if(token in self.tokens):
+                    posi = self.tokens.index(token) + 1
+                    tokenScanner.setID(posi)
                 self.tokensLeidos.append(tokenScanner)
                 break
 
@@ -1126,6 +1154,14 @@ class Scanner:
                 # Si se encontro un token
                 if(len(token) == 0):
                     self.print.pprint("La cadena ---" + tokenDef + "--- es un token invalido!")
+                    if(tokenDef != " "):
+                        tokenScanner = TokenScanner()
+                        tokenScanner.setTipo("ANONIMO")
+                        tokenScanner.setValor(tokenDef)
+                        if(tokenDef in self.tokens):
+                            posi = self.tokens.index(token) + 1
+                            tokenScanner.setID(posi)
+                        self.tokensLeidos.append(tokenScanner)
                     s = [0]
                     s2 = [0]
                     tokenDef = ""
@@ -1134,7 +1170,10 @@ class Scanner:
                     self.print.pprint("El token es: --" + str(token) + "-- para la cadena: " + str(tokenDef))
                     tokenScanner = TokenScanner()
                     tokenScanner.setTipo(token)
-                    tokenScanner.setTipo(setValor)
+                    tokenScanner.setValor(tokenDef)
+                    if(token in self.tokens):
+                        posi = self.tokens.index(token) + 1
+                        tokenScanner.setID(posi)
                     self.tokensLeidos.append(tokenScanner)
                     s = [0]
                     s2 = [0]
@@ -1142,6 +1181,14 @@ class Scanner:
             # Si no hay transicion
             elif(len(s) == 0):
                 self.print.pprint("La cadena ---" + tokenDef + "--- es un token invalido!")
+                if(tokenDef != " "):
+                    tokenScanner = TokenScanner()
+                    tokenScanner.setTipo("ANONIMO")
+                    tokenScanner.setValor(tokenDef)
+                    if(tokenDef in self.tokens):
+                        posi = self.tokens.index(tokenDef) + 1
+                        tokenScanner.setID(posi)
+                    self.tokensLeidos.append(tokenScanner)
                 s = [0]
                 s2 = [0]
                 tokenDef = ""
@@ -1149,21 +1196,24 @@ class Scanner:
             cont += 1
             cadena.pop()
 
-def menu():
-    nombre = str(input("Ingrese el nombre del archivo que desea leer: "))
+# def menu():
+#     # nombre = str(input("Ingrese el nombre del archivo que desea leer: "))
+#     nombre = "prueba.txt"
 
-    main = Scanner(nombre)
-    main.main()
+#     main = Scanner(nombre)
+#     main.main()
 
-menu()
+# menu()
             """
         )
 
 
 def menu():
     # nombre = str(input("Ingrese el nombre del archivo Cocol que desea leer: "))
+    # nombreTxt = str(input("Ingrese el nombre del archivo de prueba que desea leer: "))
 
-    main = Main("Expr.ATG")
+    # main = Main(nombre, nombreTxt)
+    main = Main("Expr.ATG", "prueba.txt")
     main.main()
 
 menu()
