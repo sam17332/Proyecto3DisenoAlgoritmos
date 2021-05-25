@@ -22,9 +22,11 @@ class Main:
         self.producciones = []
         self.posBloqueadasTemp = []
         self.diccionarioProdFinal = {}
+        self.diccionarioProdFinal2 = {}
         self.primeraPos = {}
         self.txt = txt
         self.diccionarioTokensLeidos = {}
+        self.cantTabs = 1
 
     def main(self):
         self.lectura()
@@ -54,7 +56,6 @@ class Main:
         # print()
 
         self.construccionTokens()
-
         self.construccionProducciones()
     # '''
         tokensLen = len(self.json["TOKENS"])
@@ -109,28 +110,103 @@ class Main:
         scannerInst = Scanner(self.txt)
         scannerInst.main()
 
-        cont = 0
+        self.escribirParser()
+    # '''
+
+    def escribirParser(self):
+        f = open("parser.py", "w", encoding="utf8")
+        f.write('''
+import pickle
+
+class parserFinal():
+    def __init__(self) -> None:
+        self.tokensScaneados = ""  # los tokens leidos
+        self.tokensMapeados = ""
+        self.lastToken = ""
+        self.lookAheadToken = ""
+        self.leerTokensAndMap()
+        self.Parser()
+
+    def leerTokensAndMap(self):
+        file = open("tokensLeidos", 'rb')
+        self.tokensScaneados = pickle.load(file)
+        file.close()
+
+        file = open("diccionarioTokensLeidos", 'rb')
+        self.tokensMapeados = pickle.load(file)
+        file.close()
+
+        print(self.tokensMapeados)
+        print(self.tokensScaneados)
+
+        for x in range(len(self.tokensScaneados)):
+            if(self.tokensScaneados[x].getID() != ""):
+                self.tokensScaneados.append(self.tokensScaneados[x])
+
+    def Expect(self, tokenId):
+        if(self.lookAheadToken.getID() == tokenId):
+            #print("llamare un nuevo token con tokenID: ", tokenId)
+            self.GetNewToken()
+        else:
+            self.printERROROnScreen(tokenId)
+
+    def GetNewToken(self):
+        self.lastToken = self.lookAheadToken
+        if(len(self.tokensScaneados) > 0):
+            self.lookAheadToken = self.tokensScaneados.pop(0)
+        else:
+            self.lookAheadToken = self.lookAheadToken
+
+    def getNumber(self):
+        if(self.lookAheadToken.getValor() != "+" and self.lookAheadToken.getValor() != "-" and self.lookAheadToken.getValor() != "*" and self.lookAheadToken.getValor() != "/" and self.lookAheadToken.getValor() != ";"):
+            return int(self.lastToken.getValor())
+        else:
+            return self.lastToken.getValor()
+
+    def getVar(self):
+        return self.lookAheadToken.getValor()
+
+        ''')
         for key, produccion in self.diccionarioProdFinal.items():
-            cont += 1
             print(key)
+            f.write('\n')
             # print(produccion)
             postfixInstProd = PostfixProd()
             postfixProd = postfixInstProd.toPostfix(produccion)
-            self.escribirParser(postfixProd)
-            # print(postfixProd)
             for index in postfixProd:
                 print(index.getTipoCharProd())
-            print()
-            print()
-            print()
-            print()
-            # if(cont == 4):
-            #     break
+                if(index.getTipo() == "NOMBRE"):
+                    if(index.getParametros() == ""):
+                        f.write("\t"*self.cantTabs + 'def ' + index.getValor()+'():')
+                    else:
+                        tamanio = len(index.getParametros())
+                        f.write("\t"*self.cantTabs + 'def ' + index.getValor()+'(' + index.getParametros()[4:tamanio] + '):')
+                    f.write('\n')
+                    self.cantTabs += 1
+            self.cantTabs -= 1
+        f.write('\n')
 
-    # '''
+        f.write('''
+    def Parser(self):
+        self.GetNewToken()
+        # llamamos al primer simbolo de la gramatica
+        self.Expr()
 
-    def escribirParser(self, postfix):
-        print("hi")
+    def printERROROnScreen(self, tokenId):
+        for x in self.tokensScaneados:
+            if(x.getID() == tokenId):
+                if(x.getTipoToken() == "ERROR"):
+                    errorPrint = x.getValor()
+                    print(f'{errorPrint} expected')
+                elif(x.getTipoToken() != "ERROR"):
+                    errorPrint = x.getTipoToken()
+                    print(f'{errorPrint} expected')
+
+
+obj = parserFinal()
+        ''')
+        f.close()
+
 
     def lectura(self):
         char = False
@@ -274,11 +350,11 @@ class Main:
                                 acumulado += i
                             else:
                                 varFinal = acumulado.replace(" ", "")
-                                self.producciones.append(acumulado.replace(" ", ""))
+                                self.producciones.append(varFinal)
                                 break
                     else:
                         varFinal = var.replace(" ", "")
-                        self.producciones.append(var.replace(" ", ""))
+                        self.producciones.append(varFinal)
                     resultado = arrayProduc[1]
                     if(resultado[len(resultado)-1] != "."):
                         self.lineasBloqueadas.append(contador)
@@ -286,7 +362,7 @@ class Main:
                     resultado = resultado.replace("  ", "")
                     resultado = resultado.replace("(. ", "(.")
                     resultado = resultado.replace(" .)", ".)")
-                    diccionarioProduc[varFinal] = str(resultado)
+                    diccionarioProduc[var] = str(resultado)
 
             contador += 1
         archivo.close()
@@ -436,15 +512,17 @@ class Main:
         return acumulado
 
     def primera(self):
+        # print(self.producciones)
         for x in reversed(self.producciones):
             # print(x)
             # print("----")
             soyOR = False
             yaEntreNT = False
             yaEntreT = False
-            for index in range(len(self.diccionarioProdFinal[x])):
+            # print(self.diccionarioProdFinal2)
+            for index in range(len(self.diccionarioProdFinal2[x])):
                 # print(index)
-                llave = self.diccionarioProdFinal[x][index]
+                llave = self.diccionarioProdFinal2[x][index]
                 # print(llave.getTipoCharProd())
                 arrayTemp = []
                 if llave.getTipo() == "NOTERMINAL":
@@ -455,10 +533,10 @@ class Main:
                     # print("indexLlave: " + indexLlave)
                     arrayTemp.append(llave.getValor())
                     self.primeraPos[x] = arrayTemp
-                    for i in range(index+1, len(self.diccionarioProdFinal[x])):
+                    for i in range(index+1, len(self.diccionarioProdFinal2[x])):
                         # print("i actual")
-                        # print(self.diccionarioProdFinal[x][i].getTipoCharProd())
-                        llave2 = self.diccionarioProdFinal[x][i]
+                        # print(self.diccionarioProdFinal2[x][i].getTipoCharProd())
+                        llave2 = self.diccionarioProdFinal2[x][i]
                         if(soyOR and llave2.getTipo() != "ROR"):
                             if(llave2.getTipo() == "NOTERMINAL" and yaEntreNT == False):
                                 yaEntreNT = True
@@ -486,9 +564,7 @@ class Main:
         # print(self.producciones)
         # print(self.tokens)
         for key in diccionarioProd:
-            # print("key")
-            # print(key)
-            # print('---')
+            # print("key " + key)
             definicion = diccionarioProd[key]
             # print(definicion)
             arrayProd = []
@@ -724,6 +800,12 @@ class Main:
             # print()
             # print()
             self.diccionarioProdFinal[key] = arrayLocal
+            # print(key)
+            keyLocal = key.replace(" ", "")
+            if("<" in key and ">" in key):
+                keyLocal = key[0:key.find("<")].replace(" ", "")
+                # print(keyLocal)
+            self.diccionarioProdFinal2[keyLocal] = arrayLocal
         self.primera()
         self.lecturaPrimera()
 
