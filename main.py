@@ -24,6 +24,7 @@ class Main:
         self.diccionarioProdFinal = {}
         self.primeraPos = {}
         self.txt = txt
+        self.diccionarioTokensLeidos = {}
 
     def main(self):
         self.lectura()
@@ -53,6 +54,7 @@ class Main:
         # print()
 
         self.construccionTokens()
+
         self.construccionProducciones()
     # '''
         tokensLen = len(self.json["TOKENS"])
@@ -95,6 +97,14 @@ class Main:
         pickle.dump(self.tokens, file)
         file.close()
 
+        for tokenName in self.tokens:
+            if(tokenName in self.tokens):
+                self.diccionarioTokensLeidos[tokenName] = self.tokens.index(tokenName) + 1
+
+        file = open("diccionarioTokensLeidos", "wb")
+        pickle.dump(self.diccionarioTokensLeidos, file)
+        file.close()
+
         self.escribirScanner()
         scannerInst = Scanner(self.txt)
         scannerInst.main()
@@ -106,6 +116,7 @@ class Main:
             # print(produccion)
             postfixInstProd = PostfixProd()
             postfixProd = postfixInstProd.toPostfix(produccion)
+            self.escribirParser(postfixProd)
             # print(postfixProd)
             for index in postfixProd:
                 print(index.getTipoCharProd())
@@ -115,7 +126,11 @@ class Main:
             print()
             # if(cont == 4):
             #     break
+
     # '''
+
+    def escribirParser(self, postfix):
+        print("hi")
 
     def lectura(self):
         char = False
@@ -1209,7 +1224,7 @@ class Scanner:
 
 
 def menu():
-    # nombre = str(input("Ingrese el nombre del archivo Cocol que desea leer: "))
+    # nombre = str(input("Ingrese el nombre del ATG que desea leer: "))
     # nombreTxt = str(input("Ingrese el nombre del archivo de prueba que desea leer: "))
 
     # main = Main(nombre, nombreTxt)
