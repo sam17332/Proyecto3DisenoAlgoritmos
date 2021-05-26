@@ -118,14 +118,16 @@ class Main:
         f.write('''
 import pickle
 
-class parserFinal():
-    def __init__(self) -> None:
-        self.tokensScaneados = ""  # los tokens leidos
+class Parser():
+    def __init__(self):
+        self.tokensScaneados = ""
         self.tokensMapeados = ""
         self.lastToken = ""
         self.lookAheadToken = ""
+
+    def main(self):
         self.leerTokensAndMap()
-        self.Parser()
+        self.ParserFunc()
 
     def leerTokensAndMap(self):
         file = open("tokensLeidos", 'rb')
@@ -136,8 +138,8 @@ class parserFinal():
         self.tokensMapeados = pickle.load(file)
         file.close()
 
-        print(self.tokensMapeados)
-        print(self.tokensScaneados)
+        # print(self.tokensMapeados)
+        # print(self.tokensScaneados)
 
         for x in range(len(self.tokensScaneados)):
             if(self.tokensScaneados[x].getID() != ""):
@@ -145,7 +147,6 @@ class parserFinal():
 
     def Expect(self, tokenId):
         if(self.lookAheadToken.getID() == tokenId):
-            #print("llamare un nuevo token con tokenID: ", tokenId)
             self.GetNewToken()
         else:
             self.printERROROnScreen(tokenId)
@@ -173,23 +174,105 @@ class parserFinal():
             # print(produccion)
             postfixInstProd = PostfixProd()
             postfixProd = postfixInstProd.toPostfix(produccion)
+            conParams = False
+            objAnteriorROR = False
             for index in postfixProd:
                 print(index.getTipoCharProd())
                 if(index.getTipo() == "NOMBRE"):
+                    objAnteriorROR = False
                     if(index.getParametros() == ""):
-                        f.write("\t"*self.cantTabs + 'def ' + index.getValor()+'():')
+                        valor = index.getValor()
+                        f.write(" "*self.cantTabs*4 + 'def ' + valor + '(self):')
                     else:
                         tamanio = len(index.getParametros())
-                        f.write("\t"*self.cantTabs + 'def ' + index.getValor()+'(' + index.getParametros()[4:tamanio] + '):')
+                        f.write(" "*self.cantTabs*4 + 'def ' + index.getValor() + '(self, ' + index.getParametros()[4:tamanio] + '):')
+                        conParams = True
                     f.write('\n')
                     self.cantTabs += 1
+                elif(index.getTipo() == "NOTERMINAL"):
+                    objAnteriorROR = False
+                    params = ""
+                    if(index.getParametros() != ""):
+                        tamanio = len(index.getParametros())
+                        params = index.getParametros()[4:tamanio]
+                        f.write(" "*self.cantTabs*4 + params + ' = self.' + index.getValor()+'(' + params + ')')
+                    else:
+                        f.write(" "*self.cantTabs*4 + 'self.' + index.getValor()+'()')
+                    f.write('\n')
+                elif(index.getTipo() == "TERMINAL"):
+                    objAnteriorROR = False
+                    indexToken = self.tokens.index(index.getValor()) + 1
+                    f.write(" "*self.cantTabs*4 + 'self.Expect(' + str(indexToken) + ')')
+                    f.write('\n')
+                elif(index.getTipo() == "LENCERRADOL"):
+                    objAnteriorROR = False
+                    condicion = ""
+                    cont = 0
+                    tamanio = len(index.getPrimeraPos())
+                    for i in index.getPrimeraPos():
+                        cont += 1
+                        indexToken = self.tokens.index(i) + 1
+                        condicion += "self.lookAheadToken.getID() == " + str(indexToken)
+                        if(cont < tamanio):
+                            condicion += " or "
+                    f.write(" "*self.cantTabs*4 + 'while ' + condicion + ':')
+                    self.cantTabs += 1
+                    f.write('\n')
+                elif(index.getTipo() == "RENCERRADOL"):
+                    objAnteriorROR = False
+                    self.cantTabs -= 1
+                    f.write('\n')
+                elif(index.getTipo() == "LOR"):
+                    condicion = ""
+                    cont = 0
+                    tamanio = len(index.getPrimeraPos())
+                    for i in index.getPrimeraPos():
+                        cont += 1
+                        indexToken = self.tokens.index(i) + 1
+                        condicion += "self.lookAheadToken.getID() == " + str(indexToken)
+                        if(cont < tamanio):
+                            condicion += " or "
+                    condicionIF = "if"
+                    if(objAnteriorROR):
+                        condicionIF = "elif"
+                    f.write(" "*self.cantTabs*4 + condicionIF + '(' + condicion + '):')
+                    self.cantTabs += 1
+                    f.write('\n')
+                elif(index.getTipo() == "ROR"):
+                    objAnteriorROR = True
+                    self.cantTabs -= 1
+                    f.write('\n')
+                elif(index.getTipo() == "LENCERRADOC"):
+                    objAnteriorROR = False
+                    condicion = ""
+                    cont = 0
+                    tamanio = len(index.getPrimeraPos())
+                    for i in index.getPrimeraPos():
+                        cont += 1
+                        indexToken = self.tokens.index(i) + 1
+                        condicion += "self.lookAheadToken.getID() == " + str(indexToken)
+                        if(cont < tamanio):
+                            condicion += " or "
+                    f.write(" "*self.cantTabs*4 + 'if(' + condicion + '):')
+                    self.cantTabs += 1
+                    f.write('\n')
+                elif(index.getTipo() == "RENCERRADOC"):
+                    objAnteriorROR = False
+                    self.cantTabs -= 1
+                    f.write('\n')
+                elif(index.getTipo() == "ACTION"):
+                    objAnteriorROR = False
+                    f.write(" "*self.cantTabs*4 + index.getValor())
+                    f.write('\n')
+            if(conParams):
+                f.write(" "*self.cantTabs*4 + "return result")
+                f.write('\n')
             self.cantTabs -= 1
         f.write('\n')
 
         f.write('''
-    def Parser(self):
+    def ParserFunc(self):
         self.GetNewToken()
-        # llamamos al primer simbolo de la gramatica
         self.Expr()
 
     def printERROROnScreen(self, tokenId):
@@ -202,8 +285,12 @@ class parserFinal():
                     errorPrint = x.getTipoToken()
                     print(f'{errorPrint} expected')
 
+def menu():
+    obj = Parser()
+    obj.main()
+    print("menu")
 
-obj = parserFinal()
+menu()
         ''')
         f.close()
 
