@@ -21,6 +21,7 @@ class Scanner:
         f.close()
 
         self.simular()
+        print()
 
         print("tokens leidos")
         for i in self.tokensLeidos:
@@ -96,6 +97,7 @@ class Scanner:
         for i in self.cadenaALeer:
             cadena.append(i)
         cadena.append(" ")
+        print("Simulación")
 
         while len(cadena) > 0:
             # Si no se esta en el ultimo caracter de la cadena

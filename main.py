@@ -1,4 +1,4 @@
-# Proyecto 2 - Diseño de lenguajes
+# Proyecto 3 - Diseño de lenguajes
 # Rodrigo Samayoa Morales - 17332
 # source proyecto3/bin/activate
 
@@ -56,7 +56,18 @@ class Main:
         # print()
 
         self.construccionTokens()
+        # print("----------------------------------------------------------------------------------------------------")
+        # print("------------------------------------------------JSON------------------------------------------------")
+        # print("----------------------------------------------------------------------------------------------------")
+        # self.print.pprint(self.json)
+        # print()
+        # print()
+        # print()
         self.construccionProducciones()
+
+        print("Diccionario primeraPos:")
+        print(self.primeraPos)
+        print()
     # '''
         tokensLen = len(self.json["TOKENS"])
 
@@ -106,10 +117,16 @@ class Main:
         pickle.dump(self.diccionarioTokensLeidos, file)
         file.close()
 
+        print("-----------------------------------------------------------------------------------------------------")
+        print("---------------------------------------------------Scanner-------------------------------------------")
+        print("-----------------------------------------------------------------------------------------------------")
         self.escribirScanner()
         scannerInst = Scanner(self.txt)
         scannerInst.main()
 
+        print("----------------------------------------------------------------------------------------------------")
+        print("---------------------------------------------------Parser-------------------------------------------")
+        print("----------------------------------------------------------------------------------------------------")
         self.escribirParser()
     # '''
 
@@ -138,8 +155,7 @@ class Parser():
         self.tokensMapeados = pickle.load(file)
         file.close()
 
-        # print(self.tokensMapeados)
-        # print(self.tokensScaneados)
+        print(self.tokensMapeados)
 
         for x in range(len(self.tokensScaneados)):
             if(self.tokensScaneados[x].getID() != ""):
@@ -171,7 +187,6 @@ class Parser():
         for key, produccion in self.diccionarioProdFinal.items():
             print(key)
             f.write('\n')
-            # print(produccion)
             postfixInstProd = PostfixProd()
             postfixProd = postfixInstProd.toPostfix(produccion)
             conParams = False
@@ -268,6 +283,7 @@ class Parser():
                 f.write(" "*self.cantTabs*4 + "return result")
                 f.write('\n')
             self.cantTabs -= 1
+            print()
         f.write('\n')
 
         f.write('''
@@ -288,12 +304,10 @@ class Parser():
 def menu():
     obj = Parser()
     obj.main()
-    print("menu")
 
 menu()
         ''')
         f.close()
-
 
     def lectura(self):
         char = False
@@ -639,15 +653,13 @@ menu()
                         elif(llave2.getTipo() == "ROR"):
                             soyOR = False
                     break
-            # print()
-            # print()
-            # print()
-            # print()
-        # print(self.primeraPos)
 
 
     def construccionProducciones(self):
         diccionarioProd = self.json["PRODUCTIONS"]
+        print("Producciones")
+        print(diccionarioProd)
+        print()
         # print(self.producciones)
         # print(self.tokens)
         for key in diccionarioProd:
@@ -1221,6 +1233,7 @@ class Scanner:
         f.close()
 
         self.simular()
+        print()
 
         print("tokens leidos")
         for i in self.tokensLeidos:
@@ -1296,6 +1309,7 @@ class Scanner:
         for i in self.cadenaALeer:
             cadena.append(i)
         cadena.append(" ")
+        print("Simulación")
 
         while len(cadena) > 0:
             # Si no se esta en el ultimo caracter de la cadena
@@ -1393,11 +1407,10 @@ class Scanner:
 
 
 def menu():
-    # nombre = str(input("Ingrese el nombre del ATG que desea leer: "))
-    # nombreTxt = str(input("Ingrese el nombre del archivo de prueba que desea leer: "))
+    nombre = str(input("Ingrese el nombre del ATG que desea leer: "))
+    nombreTxt = str(input("Ingrese el nombre del archivo de prueba que desea leer: "))
 
-    # main = Main(nombre, nombreTxt)
-    main = Main("Expr.ATG", "prueba.txt")
+    main = Main(nombre, nombreTxt)
     main.main()
 
 menu()
